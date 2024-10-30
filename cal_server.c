@@ -104,8 +104,13 @@ int main(int argc, char **argv) {
 
         // 클라이언트에게 결과와 min, max 송신
         write(client_sockfd, (void *)&rdata, sizeof(rdata));
-        write(client_sockfd, (void *)&min_result, sizeof(min_result));
-        write(client_sockfd, (void *)&max_result, sizeof(max_result));
+        
+        // 송신할 최소값과 최대값을 호스트 바이트 오더로 변환
+        int min_result_n = htonl(min_result);
+        int max_result_n = htonl(max_result);
+        
+        write(client_sockfd, (void *)&min_result_n, sizeof(min_result_n));
+        write(client_sockfd, (void *)&max_result_n, sizeof(max_result_n));
         
         client_count++;
         close(client_sockfd);
