@@ -2,72 +2,47 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-#define MAXBUF 1024
-#define MAXCLIENTS 3
+#define MAXLINE 1024
 
-int main(int argc, char **argv)
-{
-    int server_sockfd, client_sockfd;
-    int client_len, n;
-    char buf[MAXBUF];
-    struct sockaddr_in clientaddr, serveraddr;
-    char combined_data[MAXBUF * MAXCLIENTS] = "";  // 수신한 데이터를 저장할 배열
-    int client_count = 0;  // 연결된 클라이언트 수
+int main(int argc, char **argv) {
+    struct sockaddr_in serveraddr;
+    int server_sockfd;
+    char buf[MAXLINE];
 
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
-        exit(1);
+    if ((server_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("socket error :");
+        return 1;
     }
 
-    client_len = sizeof(clientaddr);
-    if ((server_sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-        perror("socket error : ");
-        exit(1);
-    }
-
-    memset(&serveraddr, 0x00, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
-    serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serveraddr.sin_port = htons(atoi(argv[1]));
+    serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serveraddr.sin_port = htons(atoi(argv[1]));  // 서버 포트 번호를 명령행 인자로 받음
 
-    if (bind(server_sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) == -1) {
-        perror("bind error : ");
-        close(server_sockfd);
-        exit(1);
+    // 서버에 연결을 시도한다.
+    if (connect(server_sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) == -1) {
+        perror("connect error :");
+        return 1;
     }
 
-    if (listen(server_sockfd, 5) == -1) {
-        perror("listen error : ");
-        close(server_sockfd);
-        exit(1);
+    printf("Enter a message: ");
+    memset(buf, 0x00, MAXLINE);
+    read(0, buf, MAXLINE);  // 키보드 입력을 기다린다.
+
+    if (write(server_sockfd, buf, strlen(buf)) <= 0) {  // 입력 받은 데이터를 서버로 전송한다.
+        perror("write error : ");
+        return 1;
     }
 
-    while (client_count < MAXCLIENTS) {
-        client_sockfd = accept(server_sockfd, (struct sockaddr *)&clientaddr, &client_len);
-        if (client_sockfd < 0) {
-            perror("accept error : ");
-            continue;
-        }
-
-        printf("New Client Connect: %s\n", inet_ntoa(clientaddr.sin_addr));
-        memset(buf, 0x00, MAXBUF);
-        if ((n = read(client_sockfd, buf, MAXBUF)) <= 0) {
-            close(client_sockfd);
-            continue;
-        }
-
-        // 수신한 데이터를 combined_data에 연결
-        strncat(combined_data, buf, sizeof(combined_data) - strlen(combined_data) - 1);
-        client_count++;
-
-        // 모든 클라이언트에게 수신한 데이터를 송신
-        write(client_sockfd, combined_data, strlen(combined_data));
-        close(client_sockfd);
+    memset(buf, 0x00, MAXLINE);
+    // 서버로부터 데이터를 읽는다.
+    if (read(server_sockfd, buf, MAXLINE) <= 0) {
+        perror("read error : ");
+        return 1;
     }
 
+    printf("Received from server: %s\n", buf);  // 서버로부터 받은 메시지 출력
     close(server_sockfd);
     return 0;
 }
