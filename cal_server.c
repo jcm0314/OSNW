@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <limits.h>  // 추가된 부분
 
 #define PORT 3600
 #define MAX_CLIENTS 3
