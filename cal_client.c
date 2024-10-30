@@ -73,8 +73,12 @@ int main(int argc, char **argv) {
     read(s, (char *)&min_result, sizeof(min_result));
     read(s, (char *)&max_result, sizeof(max_result));
 
-    printf("Current Min: %d\n", ntohl(min_result));
-    printf("Current Max: %d\n", ntohl(max_result));
+    // 받은 최소값과 최대값을 호스트 바이트 오더로 변환
+    min_result = ntohl(min_result);
+    max_result = ntohl(max_result);
+
+    printf("Current Min: %d\n", min_result);
+    printf("Current Max: %d\n", max_result);
 
     close(s);
     return 0;
