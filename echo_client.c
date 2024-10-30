@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>  // 추가된 부분
 
 #define MAXLINE 1024
 
@@ -10,6 +11,11 @@ int main(int argc, char **argv) {
     struct sockaddr_in serveraddr;
     int server_sockfd;
     char buf[MAXLINE];
+
+    if (argc != 2) {  // 포트 번호를 인자로 받는지 확인
+        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+        return 1;
+    }
 
     if ((server_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket error :");
